@@ -18,17 +18,39 @@
 	<body>
 		<h1>Tab Accordion</h1>
 		<p>Tab block that becomes an accordion at a specified screen size</p>
-		<tab-accordion-group hideTabTitle>
+		<tab-accordion-group nevertab>
 			<tab-accordion tablabel="System" open>
 				<h1 slot="title" class="tab-accordion__head">System</h1>
 				<p>Expensum version: 0.1.0</p>
 				<p>App name: Expensum</p>
 			</tab-accordion>
 			<tab-accordion tablabel="Offline">
-				<h1 slot="title">Offline</h1>
+				<h1 slot="title" class="tab-accordion__head">Offline</h1>
 				<p>Is off line</p>
 				<p>Off line message: <code>Expensum is down for planned maintenance</code></p>
 			</tab-accordion>
 		</tab-accordion-group>
+
+		<hr />
+		<tab-accordion-group hideTabTitle >
+			<tab-accordion tablabel="System" open>
+				<h1 slot="title" class="tab-accordion__head">System</h1>
+				<p>Expensum version: 0.1.0</p>
+				<p>App name: Expensum</p>
+			</tab-accordion>
+			<tab-accordion tablabel="Offline">
+				<h1 slot="title" class="tab-accordion__head">Offline</h1>
+				<p>Is off line</p>
+				<p>Off line message: <code>Expensum is down for planned maintenance</code></p>
+			</tab-accordion>
+		</tab-accordion-group>
+
+		<hr />
+
+		<tab-accordion tablabel="System" open>
+			<h1 slot="title" class="tab-accordion__head">System</h1>
+			<p>Expensum version: 0.1.0</p>
+			<p>App name: Expensum</p>
+		</tab-accordion>
 	</body>
 </html>
