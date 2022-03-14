@@ -3,21 +3,79 @@
 	<head>
 		<meta charset="UTF-8" />
 		<link rel="icon" type="image/svg+xml" href="/src/favicon.svg" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
 		<title>Tab Accordion</title>
 		<script type="module" src="/src/tab-accordion.ts"></script>
 		<link rel="stylesheet" src="/src/tab-accordion.css" />
 		<style>
+			:root {
+				--accordion-cutoff: 48rem;
+				font-family: Arial, Helvetica, sans-serif;
+			}
 			.tab-accordion__head {
 				margin: 0;
 				padding: 0;
 				font-size: 1.5rem;
 			}
+			hr {
+				border-top: 0.05rem solid #666;
+				margin: 4rem 0;
+				padding: 0;
+			}
+			p {
+				color: darkgreen;
+			}
+			tab-accordion {
+				border-top: 0.05rem solid #eee;
+
+			}
+			tab-accordion > p:first-child {
+				margin-top: 0;
+			}
+			tab-accordion > p:last-child {
+				margin-bottom: 0;
+			}
+			@media screen and (min-width: 48rem) {
+				tab-accordion slot[title] {
+					display: none;
+				}
+			}
+
 		  </style>
 	</head>
 	<body>
 		<h1>Tab Accordion</h1>
 		<p>Tab block that becomes an accordion at a specified screen size</p>
+
+		<hr />
+
+		<h2>
+			Standard tabs that change to accordion on
+			<code>
+				@media screen and
+				max-width(min-width: var(--accordion-cutoff))
+			</code>
+		</h2>
+
+		<tab-accordion-group hideTabTitle mintabrems="52">
+			<tab-accordion tablabel="System" open>
+				<h1 slot="title" class="tab-accordion__head">System</h1>
+				<p>Expensum version: 0.1.0</p>
+				<p>App name: Expensum</p>
+			</tab-accordion>
+			<tab-accordion tablabel="Offline">
+				<h1 slot="title" class="tab-accordion__head">Offline</h1>
+				<p>Is off line</p>
+				<p>Off line message: <code>Expensum is down for planned maintenance</code></p>
+			</tab-accordion>
+		</tab-accordion-group>
+
+		<hr />
+
+		<h2>
+			Always accordion (single accordion open at one time)
+		</h2>
+
 		<tab-accordion-group nevertab>
 			<tab-accordion tablabel="System" open>
 				<h1 slot="title" class="tab-accordion__head">System</h1>
@@ -32,7 +90,12 @@
 		</tab-accordion-group>
 
 		<hr />
-		<tab-accordion-group hideTabTitle >
+
+		<h2>
+			Always accordion (Allow multiple to be open at one time)
+		</h2>
+
+		<tab-accordion-group openmulti>
 			<tab-accordion tablabel="System" open>
 				<h1 slot="title" class="tab-accordion__head">System</h1>
 				<p>Expensum version: 0.1.0</p>
@@ -46,6 +109,8 @@
 		</tab-accordion-group>
 
 		<hr />
+
+
 
 		<tab-accordion tablabel="System" open>
 			<h1 slot="title" class="tab-accordion__head">System</h1>

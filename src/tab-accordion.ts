@@ -57,10 +57,9 @@ export class TabAccordion extends LitElement {
       --ta-head-color: pink;
       --ta-head-padding: 0.3rem 0;
       --ta-head-margin: 0;
-      display: block;
-      border: solid 1px gray;
-      padding: 16px;
-      max-width: 800px;
+    }
+    :host(tab-accordion[hidetabtitle]) .tab-accordion__head {
+      display: none;
     }
     .tab-content {
       overflow: hidden;
@@ -89,15 +88,24 @@ export class TabAccordion extends LitElement {
       transition: transform ease-in-out 0.3s;
       transform-origin: 50% 40%;
     }
+    .tab-title--open {
+      text-decoration: none;
+      color: #000;
+    }
     .tab-title--open::after {
       transform: rotate(180deg);
     }
 
-    .tab-title:hover, .accordion-title:focus  {
+    .tab-title:hover, .tab-title:focus  {
       text-decoration: underline;
     }
+    .tab-title--open:hover, .tab-title--open:focus {
+      cursor: text;
+      text-decoration: none;
+      color: #000;
+    }
 
-    @media screen and (min-width: var(--accordion-cutoff)) {
+    @media screen and (min-width: 48rem) {
       .accordion-only { display: none; }
     }
   `
@@ -194,6 +202,12 @@ export class TabAccordionGroup extends LitElement {
   @property({ reflect: true, type: Boolean })
   hideTabTitle = false;
 
+  /**
+  * Whether or not to hide the tab/accordion title in tab mode
+  */
+  @property({ reflect: true, type: Number })
+  minTabRems = 48;
+
   @state()
   id : string = '';
 
@@ -203,35 +217,164 @@ export class TabAccordionGroup extends LitElement {
   @state()
   childTabs : Array<TabAccordion> = [];
 
+  private _openCount : number = 0;
+  private _openAll : boolean = true;
+
   // private _closedClasses : Array<string> = ['tab-accordion--closed']
 
   static styles = css`
     :host {
       --accordion-cutoff: 48rem;
+      --ta-head-family: Arial, helvetica, san-serif;
+      --ta-head-size: 1.25rem;
+      --ta-head-color: pink;
+      --ta-head-padding: 0.3rem 0;
+      --ta-head-margin: 0;
       display: block;
-      border: solid 1px gray;
-      padding: 16px;
-      max-width: 800px;
+      box-sizing: border-box;
     }
-    @media screen and (min-width: var(--accordion-cuttoff)) {
 
+    .tab-btns {
+      display: none;
+      flex-direction: row;
+      font-family: var(--ta-head-family);
+      column-gap: 1rem;
+      margin: 0 0 1.5rem;
+      padding: 0 0 0 1rem;
+      border-bottom: 0.1rem solid #aaa;
+      position: relative;
+    }
+    .tab-btns::after {
+      content: '';
+      position: absolute;
+      bottom: -1.1rem;
+      left: 0;
+      right: 0;
+      display: block;
+      width: 100%;
+      height: 1rem;
+      background-color: #fff;
+    }
+    .tab-btns > li {
+      list-style-type: none;
+      margin: 0 0 -0.075rem;
+      padding: 0;
+    }
+    .tab-btn {
+      display: block;
+      padding: 0.5rem 1rem;
+      border-top-left-radius: 0.5rem;
+      border-top-right-radius: 0.5rem;
+      border: 0.1rem solid #aaa;
+      box-sizing: border-box;
+      background-color: #fff;
+      text-decoration: none;
+    }
+    .tab-btn--open {
+      border-bottom-color: #fff;
+      box-shadow: 0.3rem 0.3rem 0.5rem rgba(0, 0, 0, 0.4);
+    }
+    .tab-btn--closed {
+      background-color: #eee;
+    }
+    .tab-accordion__head {
+      font-size: 1.5rem;
+      margin: 0;
+    }
+    .TAG--optional .TAG__child--closed {
+      display: block;
+    }
+    .TAG--optional .TAG__child--open {
+      display: block;
+    }
+
+    @media screen and (min-width: 48rem) {
+      .tab-btns {
+        display: flex;
+      }
+      .TAG--optional .TAG__child--closed {
+        display: none;
+      }
     }
   `
 
+  /**
+   * Get a function to handle change events on child tab-accordion
+   * events
+   */
   private _getChangeWatcher () : IHanlder {
     const self = this
     console.group('_getChangeWatcher()')
     console.groupEnd();
 
+    return (self.openMulti === false)
+      ? function (e : Event) {
+          console.group('child tab-accordion click event')
+          console.groupEnd()
+
+          self._openCount = 0;
+          for (let a = 0, c = self.childTabs.length; a < c; a += 1) {
+            if (this.id === self.childTabs[a].id) {
+              self.childTabs[a].open = true;
+              self._openCount += 1;
+            } else {
+              self.childTabs[a].open = false;
+            }
+          }
+        }
+      : function (e : Event) {
+          console.log('this is a non-event')
+        }
+
+  }
+
+  private _getClicker(tab : TabAccordion) : IHanlder {
+    const self = this
+    const tabID = tab.id
     return function (e : Event) {
+      // e.preventDefault()
+      tab.open = true;
+      console.group('tab-btn click event')
+      console.log('tabID:', tabID)
+
+      self._openCount = 0;
       if (self.openMulti === false) {
         for (let a = 0, c = self.childTabs.length; a < c; a += 1) {
-          self.childTabs[a].open = (this.id === self.childTabs[a].id);
+          self.childTabs[a].open = (self.childTabs[a].id === tabID);
+          // self._setOpenCloseClass(self.childTabs[a]);
+          console.log('self.childTabs[' + a + '].id:', self.childTabs[a].id)
+          console.log('self.childTabs[' + a + '].id  === ' + tabID + ':', self.childTabs[a].id === tabID)
         }
       }
+      self.requestUpdate()
+      console.groupEnd();
     }
   }
 
+  private _getRenderTab(self : TabAccordionGroup) : IRenderEventTrigger {
+    return (tab : TabAccordion) : TemplateResult => {
+      const _tabState = (tab.open === true) ? 'open' : 'closed'
+      const _clicker = self._getClicker(tab)
+      console.log('_clicker:', _clicker)
+      console.group('_getRenderTab()');
+      console.log('this:', this);
+      console.log('tab:', tab);
+      console.log('_tabState:', _tabState);
+      console.groupEnd();
+
+      return html`
+        <li>
+          <a href="#${tab.id}--content" id="${tab.id}--link" class="tab-btn tab-btn--${_tabState}" @click=${_clicker}>
+            ${tab.tabLabel}
+          </a>
+        </li>
+      `
+    }
+  }
+
+  /**
+   * Do basic initialisation of tab-accordion-group properties
+   */
   private _init() {
     this.doInit = false;
 
@@ -250,44 +393,9 @@ export class TabAccordionGroup extends LitElement {
       childTabs[a].addEventListener('change', changeWatcher)
       this.childTabs.push(childTabs[a]);
     }
-  }
 
-  private _getClicker(tab : TabAccordion) : IHanlder {
-    const self = this
-    const tabID = tab.id
-    return function (e : Event) {
-      // e.preventDefault()
-      tab.open = true;
-
-      if (self.openMulti === false) {
-        for (let a = 0, c = self.childTabs.length; a < c; a += 1) {
-          self.childTabs[a].open = (self.childTabs[a].id === tabID);
-          // self._setOpenCloseClass(self.childTabs[a]);
-        }
-      }
-      console.groupEnd();
-    }
-  }
-
-  private _getRenderTab(self : TabAccordionGroup) : IRenderEventTrigger {
-    return (tab : TabAccordion) : TemplateResult => {
-      const _tabState = (tab.open === true) ? 'open' : 'closed'
-      const _clicker = self._getClicker(tab)
-      // console.log('_clicker:', _clicker)
-      // console.group('_getRenderTab()');
-      // console.log('this:', this);
-      // console.log('tab:', tab);
-      // console.log('_tabState:', _tabState);
-      // console.groupEnd();
-
-      return html`
-        <li>
-          <a href="#${tab.id}--content" id="${tab.id}--link" class="tab-btn tab-btn--${_tabState}" @click=${_clicker}>
-            ${tab.tabLabel}
-          </a>
-        </li>
-      `
-    }
+    // self.styles = self.styles.replace()
+    console.log('this.minTabRems:', this.minTabRems);
   }
 
   render() {
@@ -302,16 +410,14 @@ export class TabAccordionGroup extends LitElement {
       ${(this.neverTab === false)
         ? html`
         <ul class="tab-btns">
-          ${this.childTabs.map(this._getRenderTab(this))}
+          ${repeat(this.childTabs, (tab : TabAccordion) => tab.id, this._getRenderTab(this))}
         </ul>
         `
         : ''
       }
-      <div class="tab-accordion--${blockClass}">
-        ${repeat(this.childTabs, (tab : TabAccordion) => tab.id, (tab : TabAccordion) : TemplateResult | string => {
-          return (this.neverTab || tab.open)
-            ? html`${tab}`
-            : ''
+      <div class="TAG--${blockClass}">
+        ${repeat(this.childTabs, (tab : TabAccordion) => tab.id, (tab : TabAccordion) : TemplateResult => {
+          return html`<div class="TAG__child TAG__child--${tab.open ? 'open' : 'closed'}">${tab}</div>`
         })}
       </div>
     `
