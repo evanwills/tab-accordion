@@ -50,14 +50,48 @@
 		<hr />
 
 		<h2>
-			Standard tabs that change to accordion on
-			<code>
-				@media screen and
-				max-width(min-width: var(--accordion-cutoff))
-			</code>
+			Standard tabs that change to accordion 48rem (768px) <code>[default]</code>
 		</h2>
 
-		<tab-accordion-group hideTabTitle mintabrems="52">
+		<tab-accordion-group hideTabTitle>
+			<tab-accordion tablabel="System" open>
+				<h1 slot="title" class="tab-accordion__head">System</h1>
+				<p>Expensum version: 0.1.0</p>
+				<p>App name: Expensum</p>
+			</tab-accordion>
+			<tab-accordion tablabel="Offline">
+				<h1 slot="title" class="tab-accordion__head">Offline</h1>
+				<p>Is off line</p>
+				<p>Off line message: <code>Expensum is down for planned maintenance</code></p>
+			</tab-accordion>
+		</tab-accordion-group>
+
+		<hr />
+
+		<h2>
+			Standard tabs that change to accordion 32rem (512px)
+		</h2>
+
+		<tab-accordion-group hideTabTitle mintabrems="32">
+			<tab-accordion tablabel="System" open>
+				<h1 slot="title" class="tab-accordion__head">System</h1>
+				<p>Expensum version: 0.1.0</p>
+				<p>App name: Expensum</p>
+			</tab-accordion>
+			<tab-accordion tablabel="Offline">
+				<h1 slot="title" class="tab-accordion__head">Offline</h1>
+				<p>Is off line</p>
+				<p>Off line message: <code>Expensum is down for planned maintenance</code></p>
+			</tab-accordion>
+		</tab-accordion-group>
+
+		<hr />
+
+		<h2>
+			Standard tabs that change to accordion 62rem (992px)
+		</h2>
+
+		<tab-accordion-group hideTabTitle mintabrems="62">
 			<tab-accordion tablabel="System" open>
 				<h1 slot="title" class="tab-accordion__head">System</h1>
 				<p>Expensum version: 0.1.0</p>

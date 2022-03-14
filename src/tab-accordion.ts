@@ -3,6 +3,11 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { IHanlder, IRenderEventTrigger } from './tab-accordion.d';
 import { repeat } from 'lit/directives/repeat.js';
 
+// TODO:
+//  1 in tab/accordion mode make sure at the first tab if none
+//    are open by default
+//  2 in multi-open implement open/close all button.
+
 /**
  * Make a string safe to use as an ID attribute value
  *
@@ -46,10 +51,16 @@ export class TabAccordion extends LitElement {
   @property({ reflect: true, type: Boolean })
   open : boolean = false
 
+  /**
+  * Whether or not to hide the tab/accordion title in tab mode
+  */
+  @property({ reflect: true, type: Number })
+  minTabRems = 48;
+
   @state()
   doInit : boolean = true;
 
-  static styles = css`
+  private _stylesMain = css`
     :host {
       --accordion-cutoff: 48rem;
       --ta-head-family: Arial, helvetica, san-serif;
@@ -57,9 +68,6 @@ export class TabAccordion extends LitElement {
       --ta-head-color: pink;
       --ta-head-padding: 0.3rem 0;
       --ta-head-margin: 0;
-    }
-    :host(tab-accordion[hidetabtitle]) .tab-accordion__head {
-      display: none;
     }
     .tab-content {
       overflow: hidden;
@@ -104,12 +112,18 @@ export class TabAccordion extends LitElement {
       text-decoration: none;
       color: #000;
     }
-
-    @media screen and (min-width: 48rem) {
-      .accordion-only { display: none; }
-    }
+  `
+  private _stylesMedia = css`
+    .accordion-only { display: none; }
   `
 
+  /**
+   * Handle opening & closing the accordion
+   *
+   * @param {Event} e Event that triggered this method to be called
+   *
+   * @returns {void}
+   */
   openClose(e: Event) {
     // e.preventDefault();
     this.open = !this.open;
@@ -117,6 +131,11 @@ export class TabAccordion extends LitElement {
     this.dispatchEvent(new Event('change'));
   }
 
+  /**
+   * Do basic initialisation of this accordion item
+   *
+   * @returns {void}
+   */
   private _init() {
     this.doInit = false;
 
@@ -148,12 +167,22 @@ export class TabAccordion extends LitElement {
       : 'accordion-only'
 
     return html`
-        <a href="#${this.id}--content" class="tab-title tab-title--${_contentState} ${_tabTitleClass}" @click=${this.openClose}>
-          <slot name="title"></slot>
-        </a>
-        <div id="#${this.id}--content" class="tab-content tab-content--${_contentState}">
-          <slot></slot>
-        </div>
+      <style>
+      ${this._stylesMain}
+      ${css`
+        @media screen and (min-width: ${this.minTabRems}rem) {
+          ${this._stylesMedia}
+        }
+      `}
+      </style>
+
+      <a href="#${this.id}--content" class="tab-title tab-title--${_contentState} ${_tabTitleClass}" @click=${this.openClose}>
+        <slot name="title"><h1 class="tab-accordion__head">${this.tabLabel}</h1></slot>
+      </a>
+
+      <div id="#${this.id}--content" class="tab-content tab-content--${_contentState}">
+        <slot></slot>
+      </div>
     `
   }
 }
@@ -220,11 +249,8 @@ export class TabAccordionGroup extends LitElement {
   private _openCount : number = 0;
   private _openAll : boolean = true;
 
-  // private _closedClasses : Array<string> = ['tab-accordion--closed']
-
-  static styles = css`
+  private _mainStyles = css`
     :host {
-      --accordion-cutoff: 48rem;
       --ta-head-family: Arial, helvetica, san-serif;
       --ta-head-size: 1.25rem;
       --ta-head-color: pink;
@@ -241,13 +267,13 @@ export class TabAccordionGroup extends LitElement {
       column-gap: 1rem;
       margin: 0 0 1.5rem;
       padding: 0 0 0 1rem;
-      border-bottom: 0.1rem solid #aaa;
       position: relative;
     }
-    .tab-btns::after {
+    .tab-btns::before {
       content: '';
       position: absolute;
-      bottom: -1.1rem;
+      border-top: 0.1rem solid #aaa;
+      bottom: -1.05rem;
       left: 0;
       right: 0;
       display: block;
@@ -255,27 +281,41 @@ export class TabAccordionGroup extends LitElement {
       height: 1rem;
       background-color: #fff;
     }
-    .tab-btns > li {
-      list-style-type: none;
-      margin: 0 0 -0.075rem;
-      padding: 0;
-    }
-    .tab-btn {
+    .tab-btns::after {
+      content: '';
+      position: absolute;
+      bottom: -1.025rem;
+      left: 0;
+      right: 0;
       display: block;
-      padding: 0.5rem 1rem;
+      width: 100%;
+      height: 1rem;
+      background-color: #fff;
+      z-index: 5;
+    }
+    .tab-btn__wrap {
+      list-style-type: none;
+      margin: 0 0 -0.2rem;
+      padding: 0;
       border-top-left-radius: 0.5rem;
       border-top-right-radius: 0.5rem;
       border: 0.1rem solid #aaa;
       box-sizing: border-box;
+    }
+    .tab-btn__wrap--open {
       background-color: #fff;
+      box-shadow: 0.3rem 0.3rem 0.5rem rgba(0, 0, 0, 0.4);
+      z-index: 3;
+    }
+    .tab-btn__wrap--closed {
+      background-color: #eee;
+    }
+    .tab-btn {
+      display: block;
+      padding: 0.5rem 1rem;
       text-decoration: none;
     }
     .tab-btn--open {
-      border-bottom-color: #fff;
-      box-shadow: 0.3rem 0.3rem 0.5rem rgba(0, 0, 0, 0.4);
-    }
-    .tab-btn--closed {
-      background-color: #eee;
     }
     .tab-accordion__head {
       font-size: 1.5rem;
@@ -287,16 +327,16 @@ export class TabAccordionGroup extends LitElement {
     .TAG--optional .TAG__child--open {
       display: block;
     }
-
-    @media screen and (min-width: 48rem) {
-      .tab-btns {
-        display: flex;
-      }
-      .TAG--optional .TAG__child--closed {
-        display: none;
-      }
-    }
   `
+
+  private _mediaStyles = css`
+    .tab-btns {
+      display: flex;
+    }
+    .TAG--optional .TAG__child--closed {
+      display: none;
+    }
+  `;
 
   /**
    * Get a function to handle change events on child tab-accordion
@@ -363,7 +403,7 @@ export class TabAccordionGroup extends LitElement {
       console.groupEnd();
 
       return html`
-        <li>
+        <li class="tab-btn__wrap tab-btn__wrap--${_tabState}">
           <a href="#${tab.id}--content" id="${tab.id}--link" class="tab-btn tab-btn--${_tabState}" @click=${_clicker}>
             ${tab.tabLabel}
           </a>
@@ -388,6 +428,7 @@ export class TabAccordionGroup extends LitElement {
     for (let a = 0, c = childTabs.length; a < c; a += 1) {
       if (this.hideTabTitle === true) {
         childTabs[a].hideTabTitle = true;
+        childTabs[a].minTabRems = this.minTabRems
       }
 
       childTabs[a].addEventListener('change', changeWatcher)
@@ -407,6 +448,13 @@ export class TabAccordionGroup extends LitElement {
       : 'never';
 
     return html`
+      <style>
+      ${this._mainStyles}
+
+      @media screen and (min-width: ${this.minTabRems}rem) {
+        ${this._mediaStyles}
+      }
+      </style>
       ${(this.neverTab === false)
         ? html`
         <ul class="tab-btns">
