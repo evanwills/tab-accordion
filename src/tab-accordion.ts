@@ -3,10 +3,14 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { IHanlder, IRenderEventTrigger } from './tab-accordion.d';
 import { repeat } from 'lit/directives/repeat.js';
 
-// TODO:
-//  1 in tab/accordion mode make sure at the first tab if none
-//    are open by default
-//  2 in multi-open implement open/close all button.
+/**
+ * TODO:
+ * 1. in tab/accordion - make sure that the first tab is open if no
+ *                       tab-accordion elements are open by default
+ * 2. in multi-open   -  Fix styling of closed title
+ * 3. Add CSS Custom properties for everything that should be
+ *    stylable from the host
+ */
 
 /**
  * Make a string safe to use as an ID attribute value
@@ -57,9 +61,16 @@ export class TabAccordion extends LitElement {
   @property({ reflect: true, type: Number })
   minTabRems = 48;
 
+  /**
+  * Whether or not the basic initialisation has been done
+  */
   @state()
   doInit : boolean = true;
 
+  /**
+   * Base CSS delcarations that define the non-responsive
+   * styling for a single accordion
+   */
   private _stylesMain = css`
     :host {
       --accordion-cutoff: 48rem;
@@ -113,6 +124,11 @@ export class TabAccordion extends LitElement {
       color: #000;
     }
   `
+
+  /**
+   * Responsive CSS delcarations that are to be wrapped in a
+   * media query
+   */
   private _stylesMedia = css`
     .accordion-only { display: none; }
   `
@@ -145,15 +161,14 @@ export class TabAccordion extends LitElement {
     if (this.id === '') {
       this.id = makeIdSafe(this.tabLabel)
     }
-    // if (this.open === true) {
-    //   this.classList.add('tab-accordion--open');
-    //   this.classList.remove('tab-accordion--closed');
-    // } else {
-    //   this.classList.add('tab-accordion--closed');
-    //   this.classList.remove('tab-accordion--open');
-    // }
   }
 
+
+  /**
+   * The primary render function for this component
+   *
+   * @returns {TemplateResult}
+   */
   render() {
     if (this.doInit) {
       this._init();
@@ -198,32 +213,22 @@ export class TabAccordion extends LitElement {
 @customElement('tab-accordion-group')
 export class TabAccordionGroup extends LitElement {
   /**
-  * Whether or not to allow multiple accordions to be open at the same time.
+  * How tab/accordion should be displayed
   *
-  * __NOTE:__ `TRUE` this forces neverTab to be `TRUE`
+  * Options are:
+  * 1. [default] responsive tab/accordion
+  * 2. Always accordion (only one open at a time)
+  * 3. Always accordion (many can be open at a time)
   */
-  @property({ reflect: true, type: Boolean })
-  openMulti = false;
+  @property({ reflect: true, type: Number })
+  mode = 1;
 
   /**
-  * Whether or not this should start with all accordions open
-  *
-  * __NOTE:__ `TRUE` this forces neverTab to be `TRUE`
+  * Whether or not show an open/close all button when in many
+  * open mode
   */
   @property({ reflect: true, type: Boolean })
-  openCloseAll = false;
-
-  /**
-  * Whether or not this should always be an accordion
-  */
-  @property({ reflect: true, type: Boolean })
-  neverTab = false;
-
-  /**
-  * Whether or not this should always be an accordion
-  */
-  @property({ reflect: true, type: Boolean })
-  noopenCloseAll = false;
+  hideOpenClose = false;
 
   /**
   * Whether or not to hide the tab/accordion title in tab mode
@@ -232,23 +237,57 @@ export class TabAccordionGroup extends LitElement {
   hideTabTitle = false;
 
   /**
-  * Whether or not to hide the tab/accordion title in tab mode
+  * The number of REMs wide the page needs to be before the layout
+  * switches from Accordion view to Tabs view
   */
   @property({ reflect: true, type: Number })
   minTabRems = 48;
 
-  @state()
-  id : string = '';
+  /**
+   * Text to show the user when the "Open all" button is available
+   */
+  @property({ type: String })
+  openAllTxt = 'Open all';
 
+  /**
+   * Text to show the user when the "Close all" button is available
+   */
+  @property({ type: String })
+  closeAllTxt = 'Close all';
+
+  /**
+  * How to chose when to switch from "Open All" to "Close All"
+  *
+  * Options are:
+  *   1. [default] Open all shows until all accordions are open
+  *   2. Open all shows until more than half of the accordions
+  *      are open
+  *   3. Open all only shows if no accordions are open
+  */
+  @property({ type: Number })
+  openCloseAllMode = 1;
+
+  /**
+  * Whether or not the basic initialisation has been done
+  */
   @state()
   doInit : boolean = true;
 
+  /**
+  * List of all the TabAccodion elements this TabAccordionGroup
+  * wraps
+  */
   @state()
   childTabs : Array<TabAccordion> = [];
 
   private _openCount : number = 0;
   private _openAll : boolean = true;
 
+
+  /**
+   * Base CSS delcarations that define the non-responsive styling
+   * for tab-accordion-group elements
+   */
   private _mainStyles = css`
     :host {
       --ta-head-family: Arial, helvetica, san-serif;
@@ -329,6 +368,10 @@ export class TabAccordionGroup extends LitElement {
     }
   `
 
+  /**
+   * Responsive CSS delcarations that are to be wrapped in a
+   * media query
+   */
   private _mediaStyles = css`
     .tab-btns {
       display: flex;
@@ -341,14 +384,20 @@ export class TabAccordionGroup extends LitElement {
   /**
    * Get a function to handle change events on child tab-accordion
    * events
+   *
+   * This is only used for multiopen accordions so the open/close
+   * all button show the right text for the given set of open
+   * accordion items
+   *
+   * @returns {IHanlder}
    */
   private _getChangeWatcher () : IHanlder {
     const self = this
     console.group('_getChangeWatcher()')
     console.groupEnd();
 
-    return (self.openMulti === false)
-      ? function (e : Event) {
+    return (self.mode < 3)
+      ?  function (e : Event) {
           console.group('child tab-accordion click event')
           console.groupEnd()
 
@@ -364,43 +413,82 @@ export class TabAccordionGroup extends LitElement {
         }
       : function (e : Event) {
           console.log('this is a non-event')
+          if (self.hideOpenClose === false) {
+            self._setOpenClosedText();
+            self.requestUpdate();
+          }
         }
-
   }
 
-  private _getClicker(tab : TabAccordion) : IHanlder {
-    const self = this
-    const tabID = tab.id
-    return function (e : Event) {
-      // e.preventDefault()
-      tab.open = true;
-      console.group('tab-btn click event')
-      console.log('tabID:', tabID)
+  private _setOpenClosedText () : void {
+    this._openCount = 0;
+    const c = this.childTabs.length;
+    for (let a = 0; a < c; a += 1) {
+      this._openCount += (this.childTabs[a].open) ? 1 : 0;
+    }
 
-      self._openCount = 0;
-      if (self.openMulti === false) {
-        for (let a = 0, c = self.childTabs.length; a < c; a += 1) {
-          self.childTabs[a].open = (self.childTabs[a].id === tabID);
-          // self._setOpenCloseClass(self.childTabs[a]);
-          console.log('self.childTabs[' + a + '].id:', self.childTabs[a].id)
-          console.log('self.childTabs[' + a + '].id  === ' + tabID + ':', self.childTabs[a].id === tabID)
-        }
-      }
-      self.requestUpdate()
-      console.groupEnd();
+    switch (this.openCloseAllMode) {
+      case 1:
+        this._openAll = (this._openCount === c);
+        break;
+      case 2:
+        this._openAll = (this._openCount > (c / 2));
+        break;
+      case 3:
+        this._openAll = (this._openCount === 0);
+        break
     }
   }
 
+  /**
+   * Get an event handler function to handle clicking on tab buttons
+   *
+   * @param {TabAccordion} tab Accordion element the tab button
+   *                           applies to
+   *
+   * @returns {IHanlder} Event handler function to be added as an
+   *                     event listener
+   */
+  private _getClicker(tab : TabAccordion) : IHanlder {
+    const self = this
+    const tabID = tab.id
+
+    return function (e : Event) {
+      // e.preventDefault()
+      if (tab.open === false) {
+        self._openCount = 0;
+
+        if (self.mode === 1) {
+          for (let a = 0, c = self.childTabs.length; a < c; a += 1) {
+            const _True = (self.childTabs[a].id === tabID);
+            self.childTabs[a].open = _True;
+            self._openCount += _True ? 1 : 0;
+          }
+
+          if (self._openCount === 0) {
+            // This should never happen but just in case...
+            self.childTabs[0].open = true;
+            self._openCount = 0;
+          }
+        }
+
+        self.requestUpdate()
+      }
+    }
+  }
+
+  /**
+   * Get a function that can be used as an Array.map() callback
+   * function for rendering tab buttons for this tab/accordion group
+   *
+   * @param {TabAccordionGroup} self This object
+   *
+   * @returns {IRenderEventTrigger}
+   */
   private _getRenderTab(self : TabAccordionGroup) : IRenderEventTrigger {
     return (tab : TabAccordion) : TemplateResult => {
       const _tabState = (tab.open === true) ? 'open' : 'closed'
       const _clicker = self._getClicker(tab)
-      console.log('_clicker:', _clicker)
-      console.group('_getRenderTab()');
-      console.log('this:', this);
-      console.log('tab:', tab);
-      console.log('_tabState:', _tabState);
-      console.groupEnd();
 
       return html`
         <li class="tab-btn__wrap tab-btn__wrap--${_tabState}">
@@ -412,18 +500,46 @@ export class TabAccordionGroup extends LitElement {
     }
   }
 
+  private _getOpenCloseAll () : IHanlder {
+    const self = this
+    return function (e : Event) : void {
+      self._openAll = !self._openAll;
+
+      const b = self._openCount;
+      self._openCount = 0;
+      for (let a = 0, c = self.childTabs.length; a < c; a += 1) {
+        self.childTabs[a].open = self._openAll;
+        self._openCount += (self._openAll) ? 1 : 0;
+      }
+
+      if (b !== self._openCount) {
+        self.requestUpdate()
+      }
+    }
+  }
+
   /**
    * Do basic initialisation of tab-accordion-group properties
    */
   private _init() {
-    this.doInit = false;
-
-    if (this.openMulti === true || this.openCloseAll === true) {
-      this.neverTab = true;
-    }
-
     const childTabs = this.querySelectorAll('tab-accordion');
     const changeWatcher = this._getChangeWatcher();
+
+    this.doInit = false;
+
+    this.mode = Math.round(this.mode);
+    if (this.mode > 3 || this.mode < 1) {
+      this.mode = 1;
+    }
+
+    if (this.mode < 3) {
+      this.hideOpenClose = true;
+    }
+
+    this.openCloseAllMode = Math.round(this.openCloseAllMode);
+    if (this.openCloseAllMode > 3 || this.openCloseAllMode < 1) {
+      this.openCloseAllMode = 1;
+    }
 
     for (let a = 0, c = childTabs.length; a < c; a += 1) {
       if (this.hideTabTitle === true) {
@@ -435,15 +551,24 @@ export class TabAccordionGroup extends LitElement {
       this.childTabs.push(childTabs[a]);
     }
 
+    if (this.hideOpenClose === false) {
+      this._setOpenClosedText()
+    }
+
     // self.styles = self.styles.replace()
     console.log('this.minTabRems:', this.minTabRems);
   }
 
-  render() {
+  /**
+   * The primary render function for this component
+   *
+   * @returns {TemplateResult}
+   */
+  render() : TemplateResult {
     if (this.doInit) {
       this._init()
     }
-    const blockClass = (this.neverTab === false)
+    const blockClass = (this.mode === 1)
       ? 'optional'
       : 'never';
 
@@ -455,7 +580,7 @@ export class TabAccordionGroup extends LitElement {
         ${this._mediaStyles}
       }
       </style>
-      ${(this.neverTab === false)
+      ${(this.mode === 1)
         ? html`
         <ul class="tab-btns">
           ${repeat(this.childTabs, (tab : TabAccordion) => tab.id, this._getRenderTab(this))}
@@ -463,6 +588,9 @@ export class TabAccordionGroup extends LitElement {
         `
         : ''
       }
+      ${(this.hideOpenClose === false) ? html`
+        <button @click=${this._getOpenCloseAll()}>${(this._openAll) ? this.closeAllTxt : this.openAllTxt}</button>
+      ` : ''}
       <div class="TAG--${blockClass}">
         ${repeat(this.childTabs, (tab : TabAccordion) => tab.id, (tab : TabAccordion) : TemplateResult => {
           return html`<div class="TAG__child TAG__child--${tab.open ? 'open' : 'closed'}">${tab}</div>`
