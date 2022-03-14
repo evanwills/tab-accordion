@@ -38,12 +38,6 @@ export class TabAccordion extends LitElement {
   tabLabel : string = ''
 
   /**
-   * The name to say "Hello" to.
-   */
-  @property({ reflect: true, type: String })
-  tabHeading : string = ''
-
-  /**
    * Whether or not to hide the tab/accordion title in tab mode
    */
   @property({ reflect: true, type: Boolean })
@@ -224,13 +218,6 @@ export class TabAccordionGroup extends LitElement {
   mode = 1;
 
   /**
-  * Whether or not show an open/close all button when in many
-  * open mode
-  */
-  @property({ reflect: true, type: Boolean })
-  hideOpenClose = false;
-
-  /**
   * Whether or not to hide the tab/accordion title in tab mode
   */
   @property({ reflect: true, type: Boolean })
@@ -242,6 +229,13 @@ export class TabAccordionGroup extends LitElement {
   */
   @property({ reflect: true, type: Number })
   minTabRems = 48;
+
+  /**
+  * Whether or not show an open/close all button when in many
+  * open mode
+  */
+  @property({ reflect: true, type: Boolean })
+  hideOpenClose = false;
 
   /**
    * Text to show the user when the "Open all" button is available
@@ -259,10 +253,10 @@ export class TabAccordionGroup extends LitElement {
   * How to chose when to switch from "Open All" to "Close All"
   *
   * Options are:
-  *   1. [default] Open all shows until all accordions are open
-  *   2. Open all shows until more than half of the accordions
+  *   1. [default] "Open all" shows until all accordions are open
+  *   2. "Open all" shows until more than half of the accordions
   *      are open
-  *   3. Open all only shows if no accordions are open
+  *   3. "Open all" only shows if no accordions are open
   */
   @property({ type: Number })
   openCloseAllMode = 1;
