@@ -9,13 +9,29 @@
 		<link rel="stylesheet" src="/src/tab-accordion.css" />
 		<style>
 			:root {
-				--accordion-cutoff: 48rem;
 				font-family: Arial, Helvetica, sans-serif;
-			}
-			.tab-accordion__head {
-				margin: 0;
-				padding: 0;
-				font-size: 1.5rem;
+				box-sizing: border-box;
+
+				--TA-head--color: #00c;
+				--TA-head--color-hover: #00f;
+				--TA-head--color-disabled: #000;
+				--TA-head--decoration: none;
+				--TA-head--decoration-hover: underline;
+				--TA-head--decoration-disabled: none;
+				--TA-head--font-family: Arial, helvetica, san-serif;
+				--TA-head--font-size: 1.25rem;
+				--TA-head--margin: 0;
+				--TA-head--padding: 0.3rem 0;
+				--TA-oc-icon: "▾";
+				--TAG-oca-btn--justify: flex-end;
+				--TAG-oca-btn--padding: 0.5rem 1rem;
+				--TAG-oca-btn--margin: 0;
+				--TAG-oca-btn--font-family: inherit;
+				--TAG-oca-btn--font-size: inherit;
+				--TAG-oca-btn--color: #090;
+				--TAG-oca-btn--background-color: #afa;
+				--TAG-oca-btn--border-radius: 0.3rem;
+				--TAG-oca-btn--border: 0.05rem solid #ccc;
 			}
 			hr {
 				border-top: 0.05rem solid #666;
@@ -47,14 +63,14 @@
 		<h1>Tab Accordion</h1>
 		<p>Tab block that becomes an accordion at a specified screen size</p>
 
-		<hr />
+		<hr id="tab-48" />
 
 		<h2>
 			Standard tabs that change to accordion 48rem (768px) <code>[default]</code>
 		</h2>
 
 		<tab-accordion-group hideTabTitle>
-			<tab-accordion tablabel="System" open>
+			<tab-accordion tablabel="System">
 				<h1 slot="title" class="tab-accordion__head">System</h1>
 				<p>Expensum version: 0.1.0</p>
 				<p>App name: Expensum</p>
@@ -66,7 +82,7 @@
 			</tab-accordion>
 		</tab-accordion-group>
 
-		<hr />
+		<hr id="tab-32" />
 
 		<h2>
 			Standard tabs that change to accordion 32rem (512px)
@@ -85,7 +101,7 @@
 			</tab-accordion>
 		</tab-accordion-group>
 
-		<hr />
+		<hr id="tab-62" />
 
 		<h2>
 			Standard tabs that change to accordion 62rem (992px)
@@ -104,13 +120,13 @@
 			</tab-accordion>
 		</tab-accordion-group>
 
-		<hr />
+		<hr id="accordion-single" />
 
 		<h2>
 			Always accordion (single accordion open at one time)
 		</h2>
 
-		<tab-accordion-group nevertab mode="2">
+		<tab-accordion-group mode="2">
 			<tab-accordion tablabel="System" open>
 				<h1 slot="title" class="tab-accordion__head">System</h1>
 				<p>Expensum version: 0.1.0</p>
@@ -123,7 +139,7 @@
 			</tab-accordion>
 		</tab-accordion-group>
 
-		<hr />
+		<hr id="accordion-multi" />
 
 		<h2>
 			Always accordion (Allow multiple to be open at one time)
@@ -144,6 +160,7 @@
 
 		<hr />
 
+		<h2>Stand alone single accordion (ungrouped)</h2>
 
 
 		<tab-accordion tablabel="System" open>
