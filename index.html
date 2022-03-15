@@ -83,6 +83,13 @@
 			tab-accordion > p:last-child {
 				margin-bottom: 0;
 			}
+			.fancy-list {
+				display: flex;
+				flex-wrap: wrap;
+			}
+			.fancy-list > li {
+				max-width: 15rem;
+			}
 			@media screen and (min-width: 48rem) {
 				tab-accordion slot[title] {
 					display: none;
@@ -111,6 +118,17 @@
 				<h1 slot="title" class="tab-accordion__head">Offline</h1>
 				<p>Is off line</p>
 				<p>Off line message: <code>Expensum is down for planned maintenance</code></p>
+				<ul class="fancy-list">
+					<li>The <a href="/en-US/docs/Web/HTML/Element/template"><code>&lt;template&gt;</code></a> has a <a href="/en-US/docs/Web/HTML/Element/style"><code>&lt;style&gt;</code></a> element with a set of CSS styles that are scoped just to the document fragment the <a href="/en-US/docs/Web/HTML/Element/template"><code>&lt;template&gt;</code></a> creates.</li>
+					<li>The <a href="/en-US/docs/Web/HTML/Element/template"><code>&lt;template&gt;</code></a> uses <a href="/en-US/docs/Web/HTML/Element/slot"><code>&lt;slot&gt;</code></a> and its <a href="/en-US/docs/Web/HTML/Element/slot#attr-name"><code>name</code></a> attribute to make three <a href="/en-US/docs/Web/HTML/Element/slot#named-slot">named slots</a>:
+					  <ul>
+						<li><code>&lt;slot name="element-name"&gt;</code></li>
+						<li><code>&lt;slot name="description"&gt;</code></li>
+						<li><code>&lt;slot name="attributes"&gt;</code></li>
+					  </ul>
+					</li>
+					<li>The <a href="/en-US/docs/Web/HTML/Element/template"><code>&lt;template&gt;</code></a> wraps the <a href="/en-US/docs/Web/HTML/Element/slot#named-slot">named slots</a> in a <a href="/en-US/docs/Web/HTML/Element/details"><code>&lt;details&gt;</code></a> element.</li>
+				  </ul>
 			</tab-accordion>
 		</tab-accordion-group>
 

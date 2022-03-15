@@ -1,12 +1,12 @@
 import { html, css, LitElement, TemplateResult } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators';
 import { IHanlder, TTabTmpl } from './tab-accordion.d';
-import { repeat } from 'lit/directives/repeat.js';
+import { repeat } from 'lit/directives/repeat';
+import { ifDefined } from 'lit/directives/if-defined'
 
 /**
  * TODO:
- * 1. Implement WAI-ARIA attibutes to make fully accessible.
- * 2. Fix rendering issue when multipe tabs-accordion-group blocks
+ * 1. Fix rendering issue when multipe tabs-accordion-group blocks
  *    are in tab-mode on the same page.
  */
 
@@ -20,26 +20,6 @@ import { repeat } from 'lit/directives/repeat.js';
 const makeIdSafe = (input: string) : string => {
   return input.replace(/[^a-z0-9_-]+/ig, '-')
 }
-
-
-// const converter = {
-//   fromAttribute: (input: string) : string => {
-//     return input.toLowerCase().replace(
-//       /-+([a-z0-9])/i,
-//       (whole, char) => {
-//         return char.toUpperCase();
-//       }
-//     );
-//   },
-//   toAttribute: (input: string) : string => {
-//     return input.replace(
-//       /(?<=[a-z0-9])([A-Z])/i,
-//       (whole, char) => {
-//         return '-' + char.toLowerCase()
-//       }
-//     );
-//   }
-// }
 
 const defaultHostStyles = css`
   background-color: inherit;
@@ -264,7 +244,10 @@ export class TabAccordion extends LitElement {
       ? 'single'
       : 'multi';
 
-    return html`<a href="#${tab.id}--content" class="TA-title TA-title--${_contentState} ${_tabTitleClass} open-${multiClass}" @click=${tab.openClose}>${this.tabTitle}</a>`;
+    return html`<a href="#${tab.id}--content"
+                   id="${this.id}--title"
+                   class="TA-title TA-title--${_contentState} ${_tabTitleClass} open-${multiClass}"
+                   @click=${tab.openClose}>${this.tabTitle}</a>`;
   }
 
   /**
@@ -371,7 +354,9 @@ export class TabAccordion extends LitElement {
       <div class="TA">
         ${this.hTmpl(this)}
 
-        <div id="#${this.id}--content" class="TA-content TA-content--${_contentState}">
+        <div id="${this.id}--content"
+             class="TA-content TA-content--${_contentState}"
+             aria-labelledby="${this.id}--title">
           <slot></slot>
         </div>
       </div>
@@ -520,7 +505,6 @@ export class TabAccordionGroup extends LitElement {
       --TAG-tab-btn--text-decoration--open: none;
       --TAG-tab-btn--text-decoration--hover: underline;
       --TAG-tab-btn--transform: uppercase;
-
 
       --TAG-tab-btn-list--column-gap: 1rem;
       --TAG-tab-btn-list--margin: 0 0 1rem;
@@ -755,10 +739,20 @@ export class TabAccordionGroup extends LitElement {
     return (tab : TabAccordion) : TemplateResult => {
       const _tabState = (tab.open === true) ? 'open' : 'closed'
       const _clicker = self._getClicker(tab)
+      const _current = (tab.open === true)
+        ? 'page'
+        : undefined;
 
       return html`
-        <li class="TAG-tab-btn__wrap TAG-tab-btn__wrap--${_tabState}">
-          <a href="#${tab.id}--content" id="${tab.id}--link" class="TAG-tab-btn TAG-tab-btn--${_tabState}" @click=${_clicker}>
+        <li class="TAG-tab-btn__wrap TAG-tab-btn__wrap--${_tabState}" role="presentation">
+          <a href="#${tab.id}--content"
+             id="${tab.id}--link"
+             class="TAG-tab-btn TAG-tab-btn--${_tabState}"
+             @click=${_clicker}
+             aria-controls="${tab.id}--panel"
+             aria-current="${ifDefined(_current)}"
+             aria-selected="${(tab.open === true) ? 'true' : 'false'}"
+             role="tab">
             ${tab.tabLabel}
           </a>
         </li>
@@ -857,7 +851,7 @@ export class TabAccordionGroup extends LitElement {
       <div class="TAG">
         ${(this.mode === 1)
           ? html`
-          <ul class="TAG-tab-btns">
+          <ul class="TAG-tab-btns" role="tablist">
             ${repeat(this.childTabs, (tab : TabAccordion) => tab.id, this._getRenderTab(this))}
           </ul>
           `
@@ -874,7 +868,13 @@ export class TabAccordionGroup extends LitElement {
         ` : ''}
         <div class="TAG-content TAG-content--${blockClass}">
           ${repeat(this.childTabs, (tab : TabAccordion) => tab.id, (tab : TabAccordion) : TemplateResult => {
-            return html`<div class="TAG__child TAG__child--${tab.open ? 'open' : 'closed'} open-${multiClass}">${tab}</div>`
+            return html`
+              <div id="${tab.id}--panel"
+                  class="TAG__child TAG__child--${tab.open ? 'open' : 'closed'} open-${multiClass}"
+                  role="tabpanel"
+                  aria-labelledby="${tab.id}--link">
+                ${tab}
+              </div>`
           })}
         </div>
       </div>
