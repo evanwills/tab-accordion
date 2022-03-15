@@ -1,13 +1,13 @@
 import { html, css, LitElement, TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { IHanlder, IRenderEventTrigger } from './tab-accordion.d';
+import { IHanlder, TTabTmpl } from './tab-accordion.d';
 import { repeat } from 'lit/directives/repeat.js';
 
 /**
  * TODO:
- * 1. in multi-open   -  Fix styling of closed title
- * 2. Add CSS Custom properties for everything that should be
- *    stylable from the host
+ * 1. Implement WAI-ARIA attibutes to make fully accessible.
+ * 2. Fix rendering issue when multipe tabs-accordion-group blocks
+ *    are in tab-mode on the same page.
  */
 
 /**
@@ -21,40 +21,35 @@ const makeIdSafe = (input: string) : string => {
   return input.replace(/[^a-z0-9_-]+/ig, '-')
 }
 
-const hostStyles = css`
-  :host {
-    --TA-head--color: #00c;
-    --TA-head--color-hover: #00f;
-    --TA-head--color-disabled: #000;
-    --TA-head--decoration: none;
-    --TA-head--decoration-hover: underline;
-    --TA-head--decoration-disabled: none;
-    --TA-head--font-family: Arial, helvetica, san-serif;
-    --TA-head--font-size: 1.25rem;
-    --TA-head--margin: 0;
-    --TA-head--padding: 0.3rem 0;
-    --TA-head--transform: none;
-    --TA-oc-icon: "▾";
-    --TAG-oca-btn--justify: flex-end;
-    --TAG-oca-btn--padding: 0.5rem 1rem;
-    --TAG-oca-btn--margin: 0;
-    --TAG-oca-btn--font-family: inherit;
-    --TAG-oca-btn--font-size: inherit;
-    --TAG-oca-btn--color: #090;
-    --TAG-oca-btn--background-color: #afa;
-    --TAG-oca-btn--border-radius: 0.3rem;
-    --TAG-oca-btn--border: 0.05rem solid #ccc;
-    --TAG-oca-btn--transform: uppercase;
-    --TAG-tab-btn--padding: 0.5rem 1rem;
 
-    box-sizing: border-box;
-    color: inherit;
-    display: block;
-    font-size: inherit;
-    font-family: inherit;
-    line-height: inherit;
-  }
-  `;
+// const converter = {
+//   fromAttribute: (input: string) : string => {
+//     return input.toLowerCase().replace(
+//       /-+([a-z0-9])/i,
+//       (whole, char) => {
+//         return char.toUpperCase();
+//       }
+//     );
+//   },
+//   toAttribute: (input: string) : string => {
+//     return input.replace(
+//       /(?<=[a-z0-9])([A-Z])/i,
+//       (whole, char) => {
+//         return '-' + char.toLowerCase()
+//       }
+//     );
+//   }
+// }
+
+const defaultHostStyles = css`
+  background-color: inherit;
+  box-sizing: border-box;
+  color: inherit;
+  display: block;
+  font-size: inherit;
+  font-family: inherit;
+  line-height: inherit;
+`
 
 /**
  * An example element.
@@ -71,22 +66,16 @@ export class TabAccordion extends LitElement {
   tabLabel : string = '';
 
   /**
-   * Accordion Title
+   * Whether or not tab/accordion is open
    */
-  @property({ reflect: true, type: String })
-  tabTitle : string = '';
+  @property({ reflect: true, type: Boolean })
+  open : boolean = false;
 
   /**
    * Whether or not to hide the tab/accordion title in tab mode
    */
-  @property({ reflect: true, type: Boolean })
+  @property({ type: Boolean })
   hideTabTitle : boolean = false;
-
-  /**
-   * Whether or not tab/accordion is open
-   */
-  @property({ reflect: true, type: Boolean })
-  open : boolean = false
 
   /**
    * Whether or not this tab/accordion is part of a single open group
@@ -94,14 +83,30 @@ export class TabAccordion extends LitElement {
    * Used to modify the styling of the accordion title when in single
    * tab/accordion group is in single open mode
    */
-  @property({ reflect: true, type: Boolean })
-  single : boolean = false
+  @property({ type: Boolean })
+  single : boolean = false;
+
+  /**
+   * The minimum width of the screen (in REMs) needs to be before
+   * the accordion goes into tab view
+   *
+   * Used to show/hide the tab title when `hideTabTitle` is true
+   * and in tab-accordion is rendered in tab mode
+   */
+  @property({ type: Number })
+  minTabRems = 48;
 
   /**
   * Whether or not to hide the tab/accordion title in tab mode
   */
-  @property({ reflect: true, type: Number })
-  minTabRems = 48;
+  @property({ type: Number })
+  hLevel = 2;
+
+  /**
+   * Accordion Title
+   */
+  @property({ type: String, state: true })
+  tabTitle : string = '';
 
   /**
   * Whether or not the basic initialisation has been done
@@ -114,17 +119,66 @@ export class TabAccordion extends LitElement {
    * styling for a single accordion
    */
   private _stylesMain = css`
-    .tab-content {
+    :host {
+      --TA-background-color: inherit;
+      --TA-border: none;
+      --TA-padding: 0;
+      --TA-margin: 0.5rem 0;
+
+      --TA-content--background-color: inherit;
+      --TA-content--border: none;
+      --TA-content--padding: 0;
+      --TA-content--margin: 0;
+
+      --TA-head--color: #00c;
+      --TA-head--color-hover: #00f;
+      --TA-head--color-disabled: #000;
+      --TA-head--decoration: none;
+      --TA-head--decoration-hover: underline;
+      --TA-head--decoration-disabled: none;
+      --TA-head--font-family: Arial, helvetica, san-serif;
+      --TA-head--font-size: 1.25rem;
+      --TA-head--margin: 0;
+      --TA-head--padding: 0.3rem 0 0.3rem 1.5rem;
+      --TA-head--transform: none;
+      --TA-head--cursor-disabled: text;
+
+      --TA-oc-icon: "▾";
+      --TA-oc-icon--font-family: inherit;
+      --TA-oc-icon--font-size: 2rem;
+      --TA-oc-icon--color: inherit;
+      --TA-oc-icon--top: 0.6rem;
+      --TA-oc-icon--right: auto;
+      --TA-oc-icon--bottom: auto;
+      --TA-oc-icon--left: -0.5rem;
+      --TA-oc-icon--line-height: 1rem;
+      --TA-oc-icon--transition: transform ease-in-out 0.3s;
+      --TA-oc-icon--transform-origin: 50% 40%;
+      --TA-oc-icon--transform--open: rotate(180deg);
+
+      ${defaultHostStyles}
+    }
+    .TA {
+      background-color: var(--TA-background-color);
+      padding: var(--TA-padding);
+      border: var(--TA-border);
+      margin: var(--TA-margin);
+    }
+    .TA-content {
       overflow: hidden;
       transition: height ease-in-out 1.3s;
+      background-color: var(--TA-content--background-color);
+      padding: var(--TA-content--padding);
+      border: var(--TA-content--border);
+      margin: var(--TA-content--margin);
     }
-    .tab-content--open {
+    .TA-content--open {
       height: auto;
     }
-    .tab-content--closed {
+    .TA-content--closed {
       height: 0;
     }
-    .tab-title {
+    .TA-title {
       font-family: var(--TA-head--font-family);
       font-size: var(--TA-head--font-size);
       margin: var(--TA-head--margin);
@@ -136,33 +190,44 @@ export class TabAccordion extends LitElement {
       text-transform: var(--TA-head--transform);
       width: 100%;
     }
-    .tab-title:hover, .tab-title:focus {
+    .TA-title:hover, .tab-title:focus {
       color: var(--TA-head--color-hover);
       text-decoration: var(--TA-head--decoration-hover);
 
     }
-    .tab-title::after {
+    .TA-title::after {
+      bottom: var(--TA-oc-icon--bottom);
       content: var(--TA-oc-icon);
-      font-size: 2.5em;
+      font-size: var(--TA-oc-icon--font-size);
+      font-family: var(--TA-oc-icon--font-family);
+      left: var(--TA-oc-icon--left);
+      line-height: var(--TA-oc-icon--line-height);
       position: absolute;
-      top: 0.7rem;
-      right: -0.5rem;
-      line-height: 1rem;
-      transition: transform ease-in-out 0.3s;
-      transform-origin: 50% 40%;
+      right: var(--TA-oc-icon--right);
+      top: var(--TA-oc-icon--top);
+      transition: var(--TA-oc-icon--transition);
+      transform-origin: var(--TA-oc-icon--transform-origin);
     }
-    .tab-title--open::after {
-      transform: rotate(180deg);
+    .TA-title--open::after {
+      transform: var(--TA-oc-icon--transform--open);
     }
-    .open-single.tab-title--open,
-    .open-single.tab-title--open:hover,
-    .open-single.tab-title--open:focus {
+    .open-single.TA-title--open,
+    .open-single.TA-title--open:hover,
+    .open-single.TA-title--open:focus {
       text-decoration: var(--TA-head--decoration-disabled);
       color: var(--TA-head--color-disabled);
-      cursor: text;
+      cursor: var(--TA-head--cursor-disabled);
+    }
+    .TA-head {
+      margin: var(--TA-head--margin);
+      padding: 0;
     }
   `
-
+  private hTmpl : TTabTmpl = (tab : TabAccordion) : TemplateResult => {
+    return html`
+      <h2 class="TA-head">${tab._tabTitleLink(tab)}</h2>
+    `
+  };
   /**
    * Responsive CSS delcarations that are to be wrapped in a
    * media query
@@ -185,26 +250,98 @@ export class TabAccordion extends LitElement {
     this.dispatchEvent(new Event('change'));
   }
 
+  private _tabTitleLink(tab : TabAccordion) : TemplateResult {
+
+    const _contentState = tab.open
+      ? 'open'
+      : 'closed';
+
+    const _tabTitleClass = (tab.hideTabTitle === false)
+      ? 'always-show'
+      : 'accordion-only';
+
+    const multiClass = (tab.single === true)
+      ? 'single'
+      : 'multi';
+
+    return html`<a href="#${tab.id}--content" class="TA-title TA-title--${_contentState} ${_tabTitleClass} open-${multiClass}" @click=${tab.openClose}>${this.tabTitle}</a>`;
+  }
+
   /**
    * Do basic initialisation of this accordion item
    *
    * @returns {void}
    */
   private _init() {
-    const title : Element|null = this.querySelector('[slot="title"]');
+    console.group('tab-accordion._init()');
 
-    this.doInit = false;
+    if (this.doInit) {
+      this.doInit = false;
+      const titleElement : Element|null = this.querySelector('[slot="title"]');
 
-    this.tabTitle = (title !== null)
-      ? title.innerHTML
-      : this.tabLabel;
+      console.log('titleElement:', titleElement)
 
-    if (this.id === '') {
-      this.id = makeIdSafe(this.tabLabel);
+      if (titleElement !== null) {
+        this.tabTitle = titleElement.innerHTML;
+        const _hLevel = titleElement.nodeName.replace(/^h(?=[0-9]$)/i, '');
+        console.log('titleElement.nodeName:', titleElement.nodeName)
+        console.log('_hLevel:', _hLevel)
+        if (_hLevel !== titleElement.nodeName) {
+          this.hLevel = parseInt(_hLevel, 10);
+        }
+
+        if (this.tabLabel === '') {
+          this.tabLabel = titleElement.innerText;
+        }
+      } else {
+        this.tabTitle = this.tabLabel;
+      }
+
+      if (this.id === '') {
+        this.id = makeIdSafe(this.tabLabel);
+      }
+      if (this.id === '') {
+        this.id = makeIdSafe(this.tabLabel);
+      }
+
+      switch (this.hLevel) {
+        case 1:
+          this.hTmpl = (tab : TabAccordion) : TemplateResult =>
+            html`<h1 class="TA-head">${tab._tabTitleLink(tab)}</h1>`;
+          break;
+
+        case 3:
+          this.hTmpl = (tab : TabAccordion) : TemplateResult =>
+            html`<h3 class="TA-head">${tab._tabTitleLink(tab)}</h3>`;
+          break;
+
+        case 4:
+          this.hTmpl = (tab : TabAccordion) : TemplateResult =>
+            html`<h4 class="TA-head">${tab._tabTitleLink(tab)}</h4>`;
+          break;
+
+        case 5:
+          this.hTmpl = (tab : TabAccordion) : TemplateResult =>
+            html`<h5 class="TA-head">${tab._tabTitleLink(tab)}</h5>`;
+          break;
+
+        case 6:
+          this.hTmpl = (tab : TabAccordion) : TemplateResult =>
+            html`<h6 class="TA-head">${tab._tabTitleLink(tab)}</h6>`;
+          break;
+
+        default:
+          this.hTmpl = (tab : TabAccordion) : TemplateResult =>
+            html`<h2 class="TA-head">${tab._tabTitleLink(tab)}</h2>`;
+      }
+
+      if (this.tabLabel === '' && this.tabTitle === '') {
+        console.warn(
+          'This <tab-accordion> element has no title.', this
+        );
+      }
     }
-    if (this.id === '') {
-      this.id = makeIdSafe(this.tabLabel);
-    }
+    console.groupEnd();
   }
 
 
@@ -222,17 +359,8 @@ export class TabAccordion extends LitElement {
       ? 'open'
       : 'closed';
 
-    const _tabTitleClass = (this.hideTabTitle === false)
-      ? 'always-show'
-      : 'accordion-only';
-
-    const multiClass = (this.single === true)
-      ? 'single'
-      : 'multi';
-
     return html`
       <style>
-      ${hostStyles}
       ${this._stylesMain}
       ${css`
         @media screen and (min-width: ${this.minTabRems}rem) {
@@ -240,13 +368,12 @@ export class TabAccordion extends LitElement {
         }
       `}
       </style>
+      <div class="TA">
+        ${this.hTmpl(this)}
 
-      <a href="#${this.id}--content" class="tab-title tab-title--${_contentState} ${_tabTitleClass} open-${multiClass}" @click=${this.openClose}>
-        <h3>${this.tabTitle}</h3>
-      </a>
-
-      <div id="#${this.id}--content" class="tab-content tab-content--${_contentState}">
-        <slot></slot>
+        <div id="#${this.id}--content" class="TA-content TA-content--${_contentState}">
+          <slot></slot>
+        </div>
       </div>
     `;
   }
@@ -270,27 +397,27 @@ export class TabAccordionGroup extends LitElement {
   * 2. Always accordion (only one open at a time)
   * 3. Always accordion (many can be open at a time)
   */
-  @property({ reflect: true, type: Number })
+  @property({ type: Number })
   mode = 1;
-
-  /**
-  * Whether or not to hide the tab/accordion title in tab mode
-  */
-  @property({ reflect: true, type: Boolean })
-  hideTabTitle = false;
 
   /**
   * The number of REMs wide the page needs to be before the layout
   * switches from Accordion view to Tabs view
   */
-  @property({ reflect: true, type: Number })
+  @property({ type: Number })
   minTabRems = 48;
+
+  /**
+  * Whether or not to hide the tab/accordion title in tab mode
+  */
+  @property({ type: Boolean })
+  hideTabTitle = false;
 
   /**
   * Whether or not show an open/close all button when in many
   * open mode
   */
-  @property({ reflect: true, type: Boolean })
+  @property({ type: Boolean })
   hideOpenClose = false;
 
   /**
@@ -306,16 +433,24 @@ export class TabAccordionGroup extends LitElement {
   closeAllTxt = 'Close all';
 
   /**
-  * How to chose when to switch from "Open All" to "Close All"
-  *
-  * Options are:
-  *   1. [default] "Open all" shows until all accordions are open
-  *   2. "Open all" shows until more than half of the accordions
-  *      are open
-  *   3. "Open all" only shows if no accordions are open
-  */
+   * How to decide when to switch from "Open All" to "Close All"
+   *
+   * Options are:
+   *   1. [default] "Open all" shows until all accordions are open
+   *   2. "Open all" shows until more than half of the accordions
+   *      are open
+   *   3. "Open all" only shows if no accordions are open
+   */
   @property({ type: Number })
   openCloseAllMode = 1;
+
+  /**
+   * How many tab/accordions are currently open
+   *
+   * This should never be set externally
+   */
+  @property({ reflect: true, type: Number })
+  openCount = 0;
 
   /**
   * Whether or not the basic initialisation has been done
@@ -330,7 +465,10 @@ export class TabAccordionGroup extends LitElement {
   @state()
   childTabs : Array<TabAccordion> = [];
 
-  private _openCount : number = 0;
+  /**
+   * Whether or not to render the "Open all" text or, instead show
+   * the "Close all"
+   */
   private _openAll : boolean = true;
 
 
@@ -339,26 +477,95 @@ export class TabAccordionGroup extends LitElement {
    * for tab-accordion-group elements
    */
   private _mainStyles = css`
+    :host {
+      --TAG-background-color: #fff;
+      --TAG-padding: 0;
+      --TAG-margin: 0;
+      --TAG-border: none;
+
+      --TAG-content--padding: 0 0.5rem 0.5rem 0.5rem;
+
+      --TAG-oca-btn--background-color: #afa;
+      --TAG-oca-btn--border: 0.05rem solid #ccc;
+      --TAG-oca-btn--border-radius: 0.3rem;
+      --TAG-oca-btn--color: #090;
+      --TAG-oca-btn--font-family: inherit;
+      --TAG-oca-btn--font-size: inherit;
+      --TAG-oca-btn--justify: flex-end;
+      --TAG-oca-btn--margin: 0;
+      --TAG-oca-btn--padding: 0.5rem 1rem;
+      --TAG-oca-btn--transform: uppercase;
+
+      --TAG-tab-btn--background-color: #ddd;
+      --TAG-tab-btn--border-color: #aaa;
+      --TAG-tab-btn--border-style: solid;
+      --TAG-tab-btn--border-radius: 0.5rem;
+      --TAG-tab-btn--border-width: 0.1rem;
+      --TAG-tab-btn--border: 0.05rem solid #ccc;
+      --TAG-tab-btn--border-radius: 0.3rem;
+      --TAG-tab-btn--cursor: pointer;
+      --TAG-tab-btn--cursor--open: text;
+      --TAG-tab-btn--color--open: #000;
+      --TAG-tab-btn--column-gap: 1rem;
+      --TAG-tab-btn--font-family: inherit;
+      --TAG-tab-btn--font-size: inherit;
+      --TAG-tab-btn--font-weight: inherit;
+      --TAG-tab-btn--font-weight--open: inherit;
+      --TAG-tab-btn--justify: flex-end;
+      --TAG-tab-btn--margin: 0;
+      --TAG-tab-btn--padding: 0.5rem 1rem;
+      --TAG-tab-btn--shadow: none;
+      --TAG-tab-btn--shadow--open: 0.3rem 0.3rem 0.5rem rgba(0, 0, 0, 0.4);
+      --TAG-tab-btn--text-decoration: none;
+      --TAG-tab-btn--text-decoration--open: none;
+      --TAG-tab-btn--text-decoration--hover: underline;
+      --TAG-tab-btn--transform: uppercase;
+
+
+      --TAG-tab-btn-list--column-gap: 1rem;
+      --TAG-tab-btn-list--margin: 0 0 1rem;
+      --TAG-tab-btn-list--padding: 0 0 0 0.5rem;
+      --TAG-tab-btn-list--rule-color: #aaa;
+      --TAG-tab-btn-list--rule-style: solid;
+      --TAG-tab-btn-list--rule-width: 0.1rem;
+      --TAG-tab-btn-list--border-radius: 0.5rem;
+
+      ${defaultHostStyles}
+    }
+
+    .TAG {
+      background-color: var(--TAG-background-color);
+      border: var(--TAG-border);
+      margin: var(--TAG-margin);
+      padding: var(--TAG-padding);
+    }
+    .TAG-content {
+      padding: var(--TAG-content--padding);
+    }
+
     .TAG-tab-btns {
+      background-color: var(--TAG-background-color);
       display: none;
       flex-direction: row;
-      font-family: var(--TA-head-family);
-      column-gap: 1rem;
-      margin: 0 0 1.5rem;
-      padding: 0 0 0 1rem;
+      font-family: var(--TAG-tab-btn--font-family);
+      column-gap: var(--TAG-tab-btn-list--column-gap);
+      margin: var(--TAG-tab-btn-list--margin);
+      padding: var(--TAG-tab-btn-list--padding);
       position: relative;
     }
     .TAG-tab-btns::before {
       content: '';
       position: absolute;
-      border-top: 0.1rem solid #aaa;
+      border-top-color: var(--TAG-tab-btn-list--rule-color);
+      border-top-style: var(--TAG-tab-btn-list--rule-style);
+      border-top-width: var(--TAG-tab-btn-list--rule-width);
       bottom: -1.05rem;
       left: 0;
       right: 0;
       display: block;
       width: 100%;
       height: 1rem;
-      background-color: #fff;
+      background-color: var(--TAG-background-color);
     }
     .TAG-tab-btns::after {
       content: '';
@@ -369,30 +576,44 @@ export class TabAccordionGroup extends LitElement {
       display: block;
       width: 100%;
       height: 1rem;
-      background-color: #fff;
+      background-color: var(--TAG-background-color);
       z-index: 5;
     }
     .TAG-tab-btn__wrap {
-      list-style-type: none;
-      margin: 0 0 -0.2rem;
-      padding: 0;
-      border-top-left-radius: 0.5rem;
-      border-top-right-radius: 0.5rem;
-      border: 0.1rem solid #aaa;
+      border-color: var(--TAG-tab-btn--border-color);
+      border-style: var(--TAG-tab-btn--border-style);
+      border-top-left-radius: var(--TAG-tab-btn--border-radius);
+      border-top-right-radius: var(--TAG-tab-btn--border-radius);
+      border-width: var(--TAG-tab-btn--border-width);
       box-sizing: border-box;
+      list-style-type: none;
+      margin: 0 0 calc(-2 * var(--TAG-tab-btn--border-width));
+      padding: 0;
     }
     .TAG-tab-btn__wrap--open {
-      background-color: #fff;
-      box-shadow: 0.3rem 0.3rem 0.5rem rgba(0, 0, 0, 0.4);
+      background-color: var(--TAG-background-color);
+      box-shadow: var(--TAG-tab-btn--shadow--open);
       z-index: 3;
     }
     .TAG-tab-btn__wrap--closed {
-      background-color: #eee;
+      background-color: var(--TAG-tab-btn--background-color);
     }
     .TAG-tab-btn {
+      color: var(--TAG-tab-btn--color);
       display: block;
-      padding: 0.5rem 1rem;
+      padding: var(--TAG-tab-btn--padding);
+      font-weight: var(--TAG-tab-btn--font-weight);
       text-decoration: none;
+    }
+    .TAG-tab-btn:hover {
+      cursor: var(--TAG-tab-btn--cursor);
+    }
+    .TAG-tab-btn--open {
+      color: var(--TAG-tab-btn--color--open);
+      font-weight: var(--TAG-tab-btn--font-weight--open);
+    }
+    .TAG-tab-btn--open:hover {
+      cursor: var(--TAG-tab-btn--cursor--open);
     }
     .TAG--optional .TAG__child--closed {
       display: block;
@@ -446,11 +667,11 @@ export class TabAccordionGroup extends LitElement {
 
     return (self.mode < 3)
       ?  function (e : Event) {
-          self._openCount = 0;
+          self.openCount = 0;
           for (let a = 0, c = self.childTabs.length; a < c; a += 1) {
             if (this.id === self.childTabs[a].id) {
               self.childTabs[a].open = true;
-              self._openCount += 1;
+              self.openCount += 1;
             } else {
               self.childTabs[a].open = false;
             }
@@ -466,21 +687,21 @@ export class TabAccordionGroup extends LitElement {
   }
 
   private _setOpenClosedText () : void {
-    this._openCount = 0;
+    this.openCount = 0;
     const c = this.childTabs.length;
     for (let a = 0; a < c; a += 1) {
-      this._openCount += (this.childTabs[a].open) ? 1 : 0;
+      this.openCount += (this.childTabs[a].open) ? 1 : 0;
     }
 
     switch (this.openCloseAllMode) {
       case 1:
-        this._openAll = (this._openCount === c);
+        this._openAll = (this.openCount === c);
         break;
       case 2:
-        this._openAll = (this._openCount > (c / 2));
+        this._openAll = (this.openCount > (c / 2));
         break;
       case 3:
-        this._openAll = (this._openCount === 0);
+        this._openAll = (this.openCount === 0);
         break
     }
   }
@@ -501,19 +722,19 @@ export class TabAccordionGroup extends LitElement {
     return function (e : Event) {
       // e.preventDefault()
       if (tab.open === false) {
-        self._openCount = 0;
+        self.openCount = 0;
 
         if (self.mode === 1) {
           for (let a = 0, c = self.childTabs.length; a < c; a += 1) {
             const _True = (self.childTabs[a].id === tabID);
             self.childTabs[a].open = _True;
-            self._openCount += _True ? 1 : 0;
+            self.openCount += _True ? 1 : 0;
           }
 
-          if (self._openCount === 0) {
+          if (self.openCount === 0) {
             // This should never happen but just in case...
             self.childTabs[0].open = true;
-            self._openCount = 0;
+            self.openCount = 0;
           }
         }
 
@@ -528,9 +749,9 @@ export class TabAccordionGroup extends LitElement {
    *
    * @param {TabAccordionGroup} self This object
    *
-   * @returns {IRenderEventTrigger}
+   * @returns {TTabTmpl}
    */
-  private _getRenderTab(self : TabAccordionGroup) : IRenderEventTrigger {
+  private _getRenderTab(self : TabAccordionGroup) : TTabTmpl {
     return (tab : TabAccordion) : TemplateResult => {
       const _tabState = (tab.open === true) ? 'open' : 'closed'
       const _clicker = self._getClicker(tab)
@@ -550,14 +771,14 @@ export class TabAccordionGroup extends LitElement {
     return function (e : Event) : void {
       self._openAll = !self._openAll;
 
-      const b = self._openCount;
-      self._openCount = 0;
+      const b = self.openCount;
+      self.openCount = 0;
       for (let a = 0, c = self.childTabs.length; a < c; a += 1) {
         self.childTabs[a].open = self._openAll;
-        self._openCount += (self._openAll) ? 1 : 0;
+        self.openCount += (self._openAll) ? 1 : 0;
       }
 
-      if (b !== self._openCount) {
+      if (b !== self.openCount) {
         self.requestUpdate()
       }
     }
@@ -600,7 +821,7 @@ export class TabAccordionGroup extends LitElement {
     }
 
     this._setOpenClosedText();
-    if (this.mode === 1 && this._openCount === 0) {
+    if (this.mode === 1 && this.openCount === 0) {
       if (typeof childTabs[0] !== 'undefined') {
         childTabs[0].open = true;
       }
@@ -626,7 +847,6 @@ export class TabAccordionGroup extends LitElement {
 
     return html`
       <style>
-      ${hostStyles}
       ${this._mainStyles}
 
       @media screen and (min-width: ${this.minTabRems}rem) {
@@ -634,27 +854,29 @@ export class TabAccordionGroup extends LitElement {
       }
       </style>
 
-      ${(this.mode === 1)
-        ? html`
-        <ul class="TAG-tab-btns">
-          ${repeat(this.childTabs, (tab : TabAccordion) => tab.id, this._getRenderTab(this))}
-        </ul>
-        `
-        : ''
-      }
-      ${(this.hideOpenClose === false) ? html`
-        <p class="open-close-all__wrap">
-          <button @click=${this._getOpenCloseAll()} class="open-close-all">
-            ${(this._openAll)
-              ? this.closeAllTxt
-              : this.openAllTxt}
-          </button>
-        </p>
-      ` : ''}
-      <div class="TAG--${blockClass}">
-        ${repeat(this.childTabs, (tab : TabAccordion) => tab.id, (tab : TabAccordion) : TemplateResult => {
-          return html`<div class="TAG__child TAG__child--${tab.open ? 'open' : 'closed'} open-${multiClass}">${tab}</div>`
-        })}
+      <div class="TAG">
+        ${(this.mode === 1)
+          ? html`
+          <ul class="TAG-tab-btns">
+            ${repeat(this.childTabs, (tab : TabAccordion) => tab.id, this._getRenderTab(this))}
+          </ul>
+          `
+          : ''
+        }
+        ${(this.hideOpenClose === false) ? html`
+          <p class="open-close-all__wrap">
+            <button @click=${this._getOpenCloseAll()} class="open-close-all">
+              ${(this._openAll)
+                ? this.closeAllTxt
+                : this.openAllTxt}
+            </button>
+          </p>
+        ` : ''}
+        <div class="TAG-content TAG-content--${blockClass}">
+          ${repeat(this.childTabs, (tab : TabAccordion) => tab.id, (tab : TabAccordion) : TemplateResult => {
+            return html`<div class="TAG__child TAG__child--${tab.open ? 'open' : 'closed'} open-${multiClass}">${tab}</div>`
+          })}
+        </div>
       </div>
     `
   }

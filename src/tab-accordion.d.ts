@@ -5,4 +5,4 @@ import { TabAccordion } from './tab-accordion';
 
 type IHanlder = (e : Event) => void;
 
-type IRenderEventTrigger = (tab : TabAccordion) => TemplateResult;
+type TTabTmpl = (tab : TabAccordion) => TemplateResult;

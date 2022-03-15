@@ -23,15 +23,48 @@
 				--TA-head--margin: 0;
 				--TA-head--padding: 0.3rem 0;
 				--TA-oc-icon: "▾";
-				--TAG-oca-btn--justify: flex-end;
-				--TAG-oca-btn--padding: 0.5rem 1rem;
-				--TAG-oca-btn--margin: 0;
+
+				--TAG-background-color: #fff;
+				--TAG-padding: 0;
+				--TAG-margin: 0;
+				--TAG-border: none;
+
+				--TAG-oca-btn--background-color: #afa;
+				--TAG-oca-btn--border: 0.05rem solid #ccc;
+				--TAG-oca-btn--border-radius: 0.3rem;
+				--TAG-oca-btn--color: #090;
 				--TAG-oca-btn--font-family: inherit;
 				--TAG-oca-btn--font-size: inherit;
-				--TAG-oca-btn--color: #090;
-				--TAG-oca-btn--background-color: #afa;
-				--TAG-oca-btn--border-radius: 0.3rem;
-				--TAG-oca-btn--border: 0.05rem solid #ccc;
+				--TAG-oca-btn--justify: flex-end;
+				--TAG-oca-btn--margin: 0;
+				--TAG-oca-btn--padding: 0.5rem 1rem;
+				--TAG-oca-btn--transform: uppercase;
+
+				--TAG-tab-btn--background-color: #afa;
+				--TAG-tab-btn--border-color: #aaa;
+				--TAG-tab-btn--border-style: solid;
+				--TAG-tab-btn--border-radius: 0.5rem;
+				--TAG-tab-btn--border-width: 0.1rem;
+				--TAG-tab-btn--border: 0.05rem solid #ccc;
+				--TAG-tab-btn--border-radius: 0.3rem;
+				--TAG-tab-btn--color: #090;
+				--TAG-tab-btn--column-gap: 1rem;
+				--TAG-tab-btn--font-family: inherit;
+				--TAG-tab-btn--font-size: inherit;
+				--TAG-tab-btn--justify: flex-end;
+				--TAG-tab-btn--margin: 0;
+				--TAG-tab-btn--padding: 0.5rem 1rem;
+				--TAG-tab-btn--shadow: none;
+				--TAG-tab-btn--shadow--open:  0.3rem 0.3rem 0.5rem rgba(0, 0, 0, 0.4);
+				--TAG-tab-btn--transform: uppercase;
+
+				--TAG-tab-btn-list--column-gap: 1rem;
+				--TAG-tab-btn-list--margin: 0 0 1.5rem;
+				--TAG-tab-btn-list--padding: 0 0 0 1rem;
+				--TAG-tab-btn-list--rule-color: #aaa;
+				--TAG-tab-btn-list--rule-style: solid;
+				--TAG-tab-btn-list--rule-width: 0.1rem;
+				--TAG-tab-btn-wrap--border-radius: 0.5rem;
 			}
 			hr {
 				border-top: 0.05rem solid #666;
@@ -43,7 +76,6 @@
 			}
 			tab-accordion {
 				border-top: 0.05rem solid #eee;
-
 			}
 			tab-accordion > p:first-child {
 				margin-top: 0;
@@ -70,8 +102,8 @@
 		</h2>
 
 		<tab-accordion-group hideTabTitle>
-			<tab-accordion tablabel="System">
-				<h1 slot="title" class="tab-accordion__head">System</h1>
+			<tab-accordion>
+				<h1 slot="title" class="tab-accordion__head">System information</h1>
 				<p>Expensum version: 0.1.0</p>
 				<p>App name: Expensum</p>
 			</tab-accordion>
@@ -82,7 +114,58 @@
 			</tab-accordion>
 		</tab-accordion-group>
 
-		<hr id="tab-32" />
+		<h2>
+			Standard tabs that change to accordion 48rem (768px) <code>[default]</code>
+		</h2>
+
+		<tab-accordion-group hideTabTitle>
+			<tab-accordion>
+				<h1 slot="title" class="tab-accordion__head">System information</h1>
+				<p>Expensum version: 0.1.0</p>
+				<p>App name: Expensum</p>
+			</tab-accordion>
+			<tab-accordion tablabel="Offline">
+				<h1 slot="title" class="tab-accordion__head">Offline</h1>
+				<p>Is off line</p>
+				<p>Off line message: <code>Expensum is down for planned maintenance</code></p>
+			</tab-accordion>
+		</tab-accordion-group>
+
+		<h2>
+			Standard tabs that change to accordion 48rem (768px) <code>[default]</code>
+		</h2>
+
+		<tab-accordion-group hideTabTitle>
+			<tab-accordion>
+				<h1 slot="title" class="tab-accordion__head">System information</h1>
+				<p>Expensum version: 0.1.0</p>
+				<p>App name: Expensum</p>
+			</tab-accordion>
+			<tab-accordion tablabel="Offline">
+				<h1 slot="title" class="tab-accordion__head">Offline</h1>
+				<p>Is off line</p>
+				<p>Off line message: <code>Expensum is down for planned maintenance</code></p>
+			</tab-accordion>
+		</tab-accordion-group>
+
+		<h2>
+			Standard tabs that change to accordion 48rem (768px) <code>[default]</code>
+		</h2>
+
+		<tab-accordion-group hideTabTitle>
+			<tab-accordion>
+				<h1 slot="title" class="tab-accordion__head">System information</h1>
+				<p>Expensum version: 0.1.0</p>
+				<p>App name: Expensum</p>
+			</tab-accordion>
+			<tab-accordion tablabel="Offline">
+				<h1 slot="title" class="tab-accordion__head">Offline</h1>
+				<p>Is off line</p>
+				<p>Off line message: <code>Expensum is down for planned maintenance</code></p>
+			</tab-accordion>
+		</tab-accordion-group>
+
+		<!-- <hr id="tab-32" />
 
 		<h2>
 			Standard tabs that change to accordion 32rem (512px)
@@ -90,7 +173,7 @@
 
 		<tab-accordion-group hideTabTitle mintabrems="32">
 			<tab-accordion tablabel="System" open>
-				<h1 slot="title" class="tab-accordion__head">System</h1>
+				<h4 slot="title" class="tab-accordion__head">System</h4>
 				<p>Expensum version: 0.1.0</p>
 				<p>App name: Expensum</p>
 			</tab-accordion>
@@ -99,9 +182,9 @@
 				<p>Is off line</p>
 				<p>Off line message: <code>Expensum is down for planned maintenance</code></p>
 			</tab-accordion>
-		</tab-accordion-group>
+		</tab-accordion-group> -->
 
-		<hr id="tab-62" />
+		<!-- <hr id="tab-62" />
 
 		<h2>
 			Standard tabs that change to accordion 62rem (992px)
@@ -118,8 +201,8 @@
 				<p>Is off line</p>
 				<p>Off line message: <code>Expensum is down for planned maintenance</code></p>
 			</tab-accordion>
-		</tab-accordion-group>
-
+		</tab-accordion-group> -->
+<!--
 		<hr id="accordion-single" />
 
 		<h2>
@@ -167,6 +250,6 @@
 			<h1 slot="title" class="tab-accordion__head">System</h1>
 			<p>Expensum version: 0.1.0</p>
 			<p>App name: Expensum</p>
-		</tab-accordion>
+		</tab-accordion> -->
 	</body>
 </html>
