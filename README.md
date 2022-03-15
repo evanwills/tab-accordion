@@ -4,7 +4,11 @@
 * [tab-accordion](#tab-accordion)
   * [Attributes](#tab-accordion-attributes)
   * [Internal state](#tab-accordion-internal-state)
-  * [CSS custom properties _(CSS variables)_](#tab-accordion-css-custom properties-css-variables)
+  * [CSS custom properties _(CSS variables)_](#tab-accordion-css-custom-properties-css-variables)
+* [tab-accordion-group](#tab-accordion-group)
+  * [Attributes](#tab-accordion-group-attributes)
+  * [Internal state](#tab-accordion-group-internal-state)
+  * [CSS custom properties _(CSS variables)_](#tab-accordion-group-css-custom-properties-css-variables)
 
 ## Introduction 
 
@@ -186,7 +190,7 @@ By defining the following CSS Custom Properties in your own style sheet you can 
 </tab-accordion-group>
 ```
 
-### Attributes
+### `tab-accordion-group` Attributes
 
 #### **`mode`** _{number}_ 
 
@@ -258,7 +262,7 @@ Options are:
 3. "Open all" only shows if no accordions are open
 
 
-### CSS custom properties _(CSS variables)_
+### `tab-accordion-group` CSS custom properties _(CSS variables)_
 
 By defining the following CSS Custom Properties in your own stylesheet you can give the `tab-accordion-group` element your own style.
 
