@@ -95,7 +95,7 @@ tab-accordion is rendered in tab mode.
 
 #### **`hlevel`** _{number}_ 
 
-default: `1`
+default: `2`
 
 The heading level to use for the title of the tab-accordion. This should be set by the heading (`slot="title"`) of the tab-accordion.
 
